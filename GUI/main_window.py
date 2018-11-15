@@ -30,10 +30,10 @@ col = [[filename_display_elem],
 
 col_files = [[sg.ReadButton('Next', size=(8,2)), sg.ReadButton('Prev', size=(8,2)), file_num_display_elem]]
 
-layout = [[sg.Text('Activation treshold'), sg.Input(size=(5,1)), sg.Text('Behavior differential'), sg.Input(size=(5,1))],
-          [sg.Text('Number of seeds'), sg.Input(size=(5,1)), sg.Text('Step size'), sg.Input(size=(5,1))],
-          [sg.Text('Iterations'), sg.Input(size=(5,1)), sg.Text('Gradient ascent'), sg.Input(size=(5,1))],
-          [sg.Text('Testing database'),sg.InputCombo(('Drebin', 'Driving', 'ImageNet', 'MNIST', 'PDF'), size=(10, 1), readonly=True)],
+layout = [[sg.Text('Activation treshold'), sg.Input(size=(5,1),key='actTresh',do_not_clear=True), sg.Text('Behavior differential'), sg.Input(size=(5,1),key='behavDiff',do_not_clear=True)],
+          [sg.Text('Number of seeds'), sg.Input(size=(5,1),key='numSeeds',do_not_clear=True), sg.Text('Step size'), sg.Input(size=(5,1),key='stepSize',do_not_clear=True)],
+          [sg.Text('Iterations'), sg.Input(size=(5,1),key='numIterations',do_not_clear=True), sg.Text('Gradient ascent'), sg.Input(size=(5,1),key='gradAscent',do_not_clear=True)],
+          [sg.Text('Testing database'),sg.InputCombo(('Drebin', 'Driving', 'ImageNet', 'MNIST', 'PDF'), size=(10, 1), readonly=True,key='testDb')],
           [sg.Column(col_files),sg.Column(col)],
           [sg.Button('Run simulation')]]
 
@@ -44,6 +44,7 @@ window = sg.Window('DeepXplore GUI').Layout(layout)
 i = 0
 while True:
     event, values = window.Read()
+    #print(window.FindElement('numSeeds').Get())
     if event is None:
         break
     elif event in ('Next'):
@@ -56,6 +57,8 @@ while True:
         if i < 0:
             i = num_files + i
         filename = os.path.join(folder, fnames[i])
+    elif event in ('Run simulation'):
+        print("Should call gen_diff.py for db with proper inputs..")
     else:
         filename = os.path.join(folder, fnames[i])
 
