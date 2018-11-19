@@ -57,6 +57,7 @@ model_layer_dict1, model_layer_dict2, model_layer_dict3 = init_coverage_tables(m
 
 # ==============================================================================================
 # start gen inputs
+heatmap = np.zeros(shape=(img_rows,img_cols))
 for _ in xrange(args.seeds):
     gen_img = np.expand_dims(random.choice(x_test), axis=0)
     orig_img = gen_img.copy()
@@ -166,4 +167,6 @@ for _ in xrange(args.seeds):
             imsave('./generated_inputs/' + args.transformation + '_' + str(predictions1) + '_' + str(
                 predictions2) + '_' + str(predictions3) + '_orig.png',
                    orig_img_deprocessed)
+            heatmap, hm_colored = update_heatmap(orig_img, gen_img, heatmap)
             break
+save_heatmap(hm_colored, args.transformation, args.seeds)

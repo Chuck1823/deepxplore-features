@@ -3,6 +3,8 @@ import math
 import random
 from collections import defaultdict
 
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 import tensorflow as tf
 from keras import backend as K
@@ -38,6 +40,7 @@ def preprocess_image(img_path, target_size=(100, 100)):
     input_img_data = image.img_to_array(img)
     input_img_data = np.expand_dims(input_img_data, axis=0)
     input_img_data = preprocess_input(input_img_data)
+    # print(input_img_data.shape)
     return input_img_data
 
 
@@ -89,9 +92,9 @@ def constraint_black(gradients, rect_shape=(10, 10)):
         random.randint(0, gradients.shape[1] - rect_shape[0]), random.randint(0, gradients.shape[2] - rect_shape[1]))
     new_grads = np.zeros_like(gradients)
     patch = gradients[:, start_point[0]:start_point[0] + rect_shape[0], start_point[1]:start_point[1] + rect_shape[1]]
-    if np.mean(patch) < 0:
-        new_grads[:, start_point[0]:start_point[0] + rect_shape[0],
-        start_point[1]:start_point[1] + rect_shape[1]] = -np.ones_like(patch)
+    # if np.mean(patch) < 0:
+    new_grads[:, start_point[0]:start_point[0] + rect_shape[0],
+    start_point[1]:start_point[1] + rect_shape[1]] = -np.ones_like(patch)
     return new_grads
 
 
@@ -170,3 +173,34 @@ def diverged(predictions1, predictions2, predictions3, target):
     if not predictions1 == predictions2 == predictions3:
         return True
     return False
+
+def update_heatmap(orig_img, aug_img, heatmap):
+    for x in xrange(heatmap.shape[0]):
+        for y in xrange(heatmap.shape[1]):
+            if orig_img[0,x,y,0] != aug_img[0,x,y,0]:
+                heatmap[x,y] += 1
+    hm_avg = np.mean(heatmap)
+    hm_colored = np.zeros([heatmap.shape[0], heatmap.shape[1], 3], dtype=np.uint8)
+    for x in xrange(heatmap.shape[0]):
+        for y in xrange(heatmap.shape[1]):
+            if heatmap[x,y] >= hm_avg + .25 * hm_avg:
+                hm_colored[x,y] = [255,0,0]
+            elif heatmap[x,y] >= hm_avg and heatmap[x,y] < hm_avg + .25 * hm_avg:
+                hm_colored[x,y] = [255,165,0]
+            elif heatmap[x,y] < hm_avg and heatmap[x,y] >= hm_avg - .25 * hm_avg:
+                hm_colored[x,y] = [0,255,0]
+            else:
+                hm_colored[x,y] = [0,0,255]
+    print('updated heatmap')
+    return heatmap, hm_colored
+
+def save_heatmap(hm, aug, num_imgs):
+    fn = "MNIST_" + aug + "_" + str(num_imgs)
+    fp = "./heatmaps/" + fn + ".pdf"
+    pp = PdfPages(fp)
+    fig = plt.figure(figsize = (8.5, 11))
+    plt.imshow(hm)
+    pp.savefig()
+    plt.close()
+    pp.close()
+    print('heatmap saved to ' + fp)

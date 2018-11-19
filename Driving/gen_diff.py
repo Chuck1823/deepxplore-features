@@ -39,7 +39,7 @@ input_tensor = Input(shape=input_shape)
 # load multiple models sharing same input tensor
 K.set_learning_phase(0)
 model1 = Dave_orig(input_tensor=input_tensor, load_weights=True)
-model2 = Dave_norminit(input_tensor=input_tensor, load_weights=True)
+model2 = Dave_orig(input_tensor=input_tensor, load_weights=True)
 model3 = Dave_dropout(input_tensor=input_tensor, load_weights=True)
 # init coverage table
 model_layer_dict1, model_layer_dict2, model_layer_dict3 = init_coverage_tables(model1, model2, model3)
@@ -47,7 +47,9 @@ model_layer_dict1, model_layer_dict2, model_layer_dict3 = init_coverage_tables(m
 # ==============================================================================================
 # start gen inputs
 img_paths = image.list_pictures('./testing/center', ext='jpg')
-for _ in xrange(args.seeds):
+heatmap = np.zeros(shape=(img_rows,img_cols))
+for i in xrange(args.seeds):
+    print('Image' + str(i))
     gen_img = preprocess_image(random.choice(img_paths))
     orig_img = gen_img.copy()
     # first check if input already induces differences
@@ -127,9 +129,11 @@ for _ in xrange(args.seeds):
         angle1, angle2, angle3 = model1.predict(gen_img)[0], model2.predict(gen_img)[0], model3.predict(gen_img)[0]
 
         if angle_diverged(angle1, angle2, angle3):
+
             update_coverage(gen_img, model1, model_layer_dict1, args.threshold)
             update_coverage(gen_img, model2, model_layer_dict2, args.threshold)
             update_coverage(gen_img, model3, model_layer_dict3, args.threshold)
+            print('incorrect')
 
             print(bcolors.OKGREEN + 'covered neurons percentage %d neurons %.3f, %d neurons %.3f, %d neurons %.3f'
                   % (len(model_layer_dict1), neuron_covered(model_layer_dict1)[2], len(model_layer_dict2),
@@ -150,4 +154,6 @@ for _ in xrange(args.seeds):
                 angle3) + '.png', gen_img_deprocessed)
             imsave('./generated_inputs/' + args.transformation + '_' + str(angle1) + '_' + str(angle2) + '_' + str(
                 angle3) + '_orig.png', orig_img_deprocessed)
+            heatmap, hm_colored = update_heatmap(orig_img, gen_img, heatmap)
             break
+save_heatmap(hm_colored, args.transformation, args.seeds)
