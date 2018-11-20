@@ -33,13 +33,20 @@ col_files = [[sg.ReadButton('Next', size=(8,2)), sg.ReadButton('Prev', size=(8,2
 layout = [[sg.Text('Activation treshold'), sg.Input(size=(5,1),key='actTresh',do_not_clear=True), sg.Text('Behavior differential'), sg.Input(size=(5,1),key='behavDiff',do_not_clear=True)],
           [sg.Text('Number of seeds'), sg.Input(size=(5,1),key='numSeeds',do_not_clear=True), sg.Text('Step size'), sg.Input(size=(5,1),key='stepSize',do_not_clear=True)],
           [sg.Text('Iterations'), sg.Input(size=(5,1),key='numIterations',do_not_clear=True), sg.Text('Gradient ascent'), sg.Input(size=(5,1),key='gradAscent',do_not_clear=True)],
+          [sg.Text('Augmentation type'),sg.InputCombo(('Lighting', 'Occlusion', 'Blackout', 'Blurring'), size=(10, 1), readonly=True,key='augType',change_submits=True), sg.Text('Augmentation specific values'),sg.InputCombo(('Scratched lens', 'Raindrops', 'Unfocused camera'), size=(20, 1), readonly=True,disabled=True,key='blurType'),sg.Text('Blur dimension'), sg.Input(size=(5,1),key='blurDimen',disabled=True,do_not_clear=True),sg.Text('Ellipse dimension'), sg.Input(size=(5,1),key='elipDimen',disabled=True,do_not_clear=True)],
           [sg.Text('Testing database'),sg.InputCombo(('Drebin', 'Driving', 'ImageNet', 'MNIST', 'PDF'), size=(10, 1), readonly=True,key='testDb')],
           [sg.Column(col_files),sg.Column(col)],
           [sg.Button('Run simulation')]]
 
 window = sg.Window('DeepXplore GUI').Layout(layout)
 
-#event, (actTresh, behavDiff, numSeeds, stepSize, numIt, gradAscent, testDb) = window.Read()
+#aug_type: light occl, blackout
+#weight_diff: 1
+#weight_nc: 0.1 to 0.5
+#step: 2 to 20
+#seeds: 1-100
+#grad_iterations: 20
+#treshold: 0
 
 i = 0
 while True:
@@ -47,6 +54,10 @@ while True:
     #print(window.FindElement('numSeeds').Get())
     if event is None:
         break
+    elif event in ('Blurring'):
+        window.FindElement('blurType').Update(disable=False)
+    elif event in ('Lighting'):
+        window.FindElement('elipDimen').Update(disable=False)
     elif event in ('Next'):
         i += 1
         if i >= num_files:
