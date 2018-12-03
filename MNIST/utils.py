@@ -152,6 +152,7 @@ def save_heatmap(hm, aug, num_imgs):
     pp.close()
     print('heatmap saved to ' + fp)
 
+<<<<<<< HEAD
 def error_pattern_match(hm, orig_img_list, gen_img_list, transformation, p1, p2 ,p3):
     error_pattern_set = []
     p1_error = []
@@ -177,3 +178,36 @@ def error_pattern_match(hm, orig_img_list, gen_img_list, transformation, p1, p2 
         imsave('./error_pattern_set/' + transformation + '_' + p1_error[i] + '_' + p2_error[i] +
                 '_' + p3_error[i] + '.png', img)
     print("Error pattern set saved to ./error_pattern_set/ folder")
+=======
+def make_scatter_plot(scatter_plot_data, aug, num_imgs):
+
+    data = []
+    
+    for i in range(len(scatter_plot_data)):
+        for j in range(3):
+            data.append((i,scatter_plot_data[i][j-1]))
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    for pair in data:
+        x,y = pair
+        ax.scatter(x,y,alpha=0.8,c='red')
+    title = 'MNIST_' + str(aug) + '_' + str(num_imgs) 
+    plt.title(title)
+    plt.xlabel('Iteration')
+    plt.ylabel('Predictions')
+    #plt.show()
+
+    print ('update scatter plot')
+    return fig
+
+def save_scatter_plot(scatter_plot, aug, num_imgs):
+    fn = "MNIST_" + aug + "_" + str(num_imgs)
+    fp = "./scatterplots/" +fn + ".pdf"
+    scatter_plot.savefig(fn,bbox_inches='tight')
+    pp=PdfPages(fn)
+    pp.savefig()
+    pp.close()
+
+    print('Scatter plot saved to: '+ fp) 
+>>>>>>> scatter
