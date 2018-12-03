@@ -22,7 +22,7 @@ def get_img_data(f, maxsize = (1200,850)):
 
 filename = os.path.join(folder, fnames[0])
 image_elem = sg.Image(data = get_img_data(filename))
-filename_display_elem = sg.Text(filename, size=(100,3))
+filename_display_elem = sg.Text(filename, size=(120,3))
 file_num_display_elem = sg.Text('File 1 of {}'.format(num_files), size=(15,1))
 
 col = [[filename_display_elem],
@@ -30,17 +30,17 @@ col = [[filename_display_elem],
 
 col_files = [[sg.ReadButton('Next', size=(8,2)), sg.ReadButton('Prev', size=(8,2)), file_num_display_elem]]
 
-layout = [[sg.Text('Activation treshold'), sg.Input(size=(5,1),key='actTresh',do_not_clear=True), sg.Text('Behavior differential'), sg.Input(size=(5,1),key='behavDiff',do_not_clear=True)],
+layout = [[sg.Text('Activation threshold'), sg.Input(size=(5,1),key='actThresh',do_not_clear=True), sg.Text('Behavior differential'), sg.Input(size=(5,1),key='behavDiff',do_not_clear=True)],
           [sg.Text('Number of seeds'), sg.Input(size=(5,1),key='numSeeds',do_not_clear=True), sg.Text('Step size'), sg.Input(size=(5,1),key='stepSize',do_not_clear=True)],
           [sg.Text('Iterations'), sg.Input(size=(5,1),key='numIterations',do_not_clear=True), sg.Text('Gradient ascent'), sg.Input(size=(5,1),key='gradAscent',do_not_clear=True)],
-          [sg.Text('Augmentation type'),sg.InputCombo(('Lighting', 'Occlusion', 'Blackout', 'Blurring'), size=(10, 1), readonly=True,key='augType',change_submits=True), sg.Text('Augmentation specific values'),sg.InputCombo(('Scratched lens', 'Raindrops', 'Unfocused camera'), size=(20, 1), readonly=True,key='blurType'),sg.Text('Blur dimension'), sg.Input(size=(5,1),key='blurDimen',do_not_clear=True),sg.Text('Ellipse dimension'), sg.Input(size=(5,1),key='elipDimen',do_not_clear=True)],
+          [sg.Text('Augmentation type'),sg.InputCombo(('light', 'occl', 'blackout', 'blur'), size=(10, 1), readonly=True,key='augType',change_submits=True), sg.Text('Augmentation specific values'),sg.InputCombo(('Scratched lens', 'Raindrops', 'Unfocused camera'), size=(20, 1), readonly=True,key='blurType'),sg.Text('Blur dimension'), sg.Input(size=(5,1),key='blurDimen',do_not_clear=True),sg.Text('Ellipse dimension'), sg.Input(size=(5,1),key='elipDimen',do_not_clear=True)],
           [sg.Text('Testing database'),sg.InputCombo(('Drebin', 'Driving', 'ImageNet', 'MNIST', 'PDF'), size=(10, 1), readonly=True,key='testDb')],
           [sg.Column(col_files),sg.Column(col)],
           [sg.Button('Run simulation')]]
 
 window = sg.Window('DeepXplore GUI').Layout(layout)
 
-#aug_type: light occl, blackout
+#aug_type: light, occl, blackout, blur
 #weight_diff: 1
 #weight_nc: 0.1 to 0.5
 #step: 2 to 20
@@ -51,7 +51,6 @@ window = sg.Window('DeepXplore GUI').Layout(layout)
 i = 0
 while True:
     event, values = window.Read()
-    #print(window.FindElement('numSeeds').Get())
     if event is None:
         break
     elif event in ('Next'):
@@ -65,10 +64,9 @@ while True:
             i = num_files + i
         filename = os.path.join(folder, fnames[i])
     elif event in ('Run simulation'):
-        print("Should call gen_diff.py for db with proper inputs..")
 	os.chdir("..")
-	os.chdir("Driving")
-	os.system('python gen_diff.py %s %d %d %d %d %d %d' % ("occl", 1, 0.1, 5, 100, 20, 0))
+	os.chdir(values.get('testDb'))
+	os.system('python gen_diff.py %s %d %d %d %d %d %d' % (values.get('augType'), int(window.FindElement('behavDiff').Get()), float(window.FindElement('gradAscent').Get()), int(window.FindElement('stepSize').Get()), int(window.FindElement('numSeeds').Get()), int(window.FindElement('numIterations').Get()), int(window.FindElement('actThresh').Get())))
     else:
         filename = os.path.join(folder, fnames[i])
 
