@@ -6,6 +6,7 @@ from keras import backend as K
 from keras.applications.vgg16 import preprocess_input, decode_predictions
 from keras.models import Model
 from keras.preprocessing import image
+from scipy.misc import imsave
 
 
 def preprocess_image(img_path):
@@ -168,3 +169,29 @@ def save_heatmap(hm, aug, num_imgs):
     plt.close()
     pp.close()
     print('heatmap saved to ' + fp)
+
+def error_pattern_match(hm, orig_img_list, gen_img_list, transformation, p1, p2 ,p3):
+    error_pattern_set = []
+    p1_error = []
+    p2_error = []
+    p3_error = []
+    for i, img in enumerate(gen_img_list):
+        done = False
+        for x in xrange(hm.shape[0]):
+            for y in xrange(hm.shape[1]):
+                pixel = hm[x,y]
+                orig_img = orig_img_list[i]
+                if orig_img[0,x,y,0] != img[0,x,y,0] and pixel[0] == 255:
+                    error_pattern_set.append(deprocess_image(img))
+                    p1_error.append(p1[i])
+                    p2_error.append(p1[i])
+                    p3_error.append(p3[i])
+                    done = True
+                    break
+            if done:
+                break
+
+    for i, img in enumerate(error_pattern_set):
+        imsave('./error_pattern_set/' + transformation + '_' + p1_error[i] + '_' + p2_error[i] +
+                '_' + p3_error[i] + '.png', img)
+    print("Error pattern set saved to ./error_pattern_set/ folder")
