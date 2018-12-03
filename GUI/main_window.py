@@ -5,7 +5,7 @@ from PIL import Image, ImageTk
 
 sg.ChangeLookAndFeel('BlueMono')
 
-folder = '/home/charles/deepxplore_senior_design/Driving/generated_inputs'
+folder = '/home/malenfc/malenfc/deepxplore_senior_design/Driving/generated_inputs'
 
 img_types = (".png")
 flist0 = os.listdir(folder)
@@ -33,7 +33,7 @@ col_files = [[sg.ReadButton('Next', size=(8,2)), sg.ReadButton('Prev', size=(8,2
 layout = [[sg.Text('Activation treshold'), sg.Input(size=(5,1),key='actTresh',do_not_clear=True), sg.Text('Behavior differential'), sg.Input(size=(5,1),key='behavDiff',do_not_clear=True)],
           [sg.Text('Number of seeds'), sg.Input(size=(5,1),key='numSeeds',do_not_clear=True), sg.Text('Step size'), sg.Input(size=(5,1),key='stepSize',do_not_clear=True)],
           [sg.Text('Iterations'), sg.Input(size=(5,1),key='numIterations',do_not_clear=True), sg.Text('Gradient ascent'), sg.Input(size=(5,1),key='gradAscent',do_not_clear=True)],
-          [sg.Text('Augmentation type'),sg.InputCombo(('Lighting', 'Occlusion', 'Blackout', 'Blurring'), size=(10, 1), readonly=True,key='augType',change_submits=True), sg.Text('Augmentation specific values'),sg.InputCombo(('Scratched lens', 'Raindrops', 'Unfocused camera'), size=(20, 1), readonly=True,disabled=True,key='blurType'),sg.Text('Blur dimension'), sg.Input(size=(5,1),key='blurDimen',disabled=True,do_not_clear=True),sg.Text('Ellipse dimension'), sg.Input(size=(5,1),key='elipDimen',disabled=True,do_not_clear=True)],
+          [sg.Text('Augmentation type'),sg.InputCombo(('Lighting', 'Occlusion', 'Blackout', 'Blurring'), size=(10, 1), readonly=True,key='augType',change_submits=True), sg.Text('Augmentation specific values'),sg.InputCombo(('Scratched lens', 'Raindrops', 'Unfocused camera'), size=(20, 1), readonly=True,key='blurType'),sg.Text('Blur dimension'), sg.Input(size=(5,1),key='blurDimen',do_not_clear=True),sg.Text('Ellipse dimension'), sg.Input(size=(5,1),key='elipDimen',do_not_clear=True)],
           [sg.Text('Testing database'),sg.InputCombo(('Drebin', 'Driving', 'ImageNet', 'MNIST', 'PDF'), size=(10, 1), readonly=True,key='testDb')],
           [sg.Column(col_files),sg.Column(col)],
           [sg.Button('Run simulation')]]
@@ -54,10 +54,6 @@ while True:
     #print(window.FindElement('numSeeds').Get())
     if event is None:
         break
-    elif event in ('Blurring'):
-        window.FindElement('blurType').Update(disable=False)
-    elif event in ('Lighting'):
-        window.FindElement('elipDimen').Update(disable=False)
     elif event in ('Next'):
         i += 1
         if i >= num_files:
@@ -70,6 +66,9 @@ while True:
         filename = os.path.join(folder, fnames[i])
     elif event in ('Run simulation'):
         print("Should call gen_diff.py for db with proper inputs..")
+	os.chdir("..")
+	os.chdir("Driving")
+	os.system('python gen_diff.py %s %d %d %d %d %d %d' % ("occl", 1, 0.1, 5, 100, 20, 0))
     else:
         filename = os.path.join(folder, fnames[i])
 
