@@ -58,6 +58,7 @@ model_layer_dict1, model_layer_dict2, model_layer_dict3 = init_coverage_tables(m
 # ==============================================================================================
 # start gen inputs
 heatmap = np.zeros(shape=(img_rows,img_cols))
+scatter_plot_data = [[0,0,0]]
 for _ in xrange(args.seeds):
     gen_img = np.expand_dims(random.choice(x_test), axis=0)
     orig_img = gen_img.copy()
@@ -168,5 +169,11 @@ for _ in xrange(args.seeds):
                 predictions2) + '_' + str(predictions3) + '_orig.png',
                    orig_img_deprocessed)
             heatmap, hm_colored = update_heatmap(orig_img, gen_img, heatmap)
+            scatter_predictions =[neuron_covered(model_layer_dict1)[2],neuron_covered(model_layer_dict2)[2],neuron_covered(model_layer_dict3)[2]]
+            scatter_plot_data.append(scatter_predictions)
             break
+scatter_plot = make_scatter_plot(scatter_plot_data, args.transformation,
+        args.seeds)
+
 save_heatmap(hm_colored, args.transformation, args.seeds)
+save_scatter_plot(scatter_plot, args.transformation, args.seeds)
