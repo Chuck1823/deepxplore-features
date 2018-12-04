@@ -6,11 +6,13 @@ from PIL import Image, ImageTk
 sg.ChangeLookAndFeel('BlueMono')
 
 folder = '/home/malenfc/malenfc/deepxplore_senior_design/Driving/generated_inputs'
-
 img_types = (".png")
-flist0 = os.listdir(folder)
-fnames = [f for f in flist0 if os.path.isfile(os.path.join(folder,f)) and f.lower().endswith(img_types)]
-num_files = len(fnames)
+
+def get_imgs(f):
+	flist = os.listdir(f)
+	fnames = [f for f in flist if os.path.isfile(os.path.join(folder,f)) and f.lower().endswith(img_types)]
+	num_files = len(fnames)
+	return fnames, num_files
 
 def get_img_data(f, maxsize = (1200,850)):
     img = Image.open(f)
@@ -20,6 +22,7 @@ def get_img_data(f, maxsize = (1200,850)):
     del img
     return bio.getvalue()
 
+fnames, num_files = get_imgs(folder)
 filename = os.path.join(folder, fnames[0])
 image_elem = sg.Image(data = get_img_data(filename))
 filename_display_elem = sg.Text(filename, size=(120,3))
@@ -58,18 +61,26 @@ while True:
         if i >= num_files:
             i -= num_files
         filename = os.path.join(folder, fnames[i])
+	image_elem.Update(data = get_img_data(filename))
+	filename_display_elem.Update(filename)
+	file_num_display_elem.Update('File {} of {}'.format(i + 1, num_files))
     elif event in ('Prev'):
         i -= 1
         if i < 0:
             i = num_files + i
         filename = os.path.join(folder, fnames[i])
+	image_elem.Update(data = get_img_data(filename))
+	filename_display_elem.Update(filename)
+	file_num_display_elem.Update('File {} of {}'.format(i + 1, num_files))
     elif event in ('Run simulation'):
 	os.chdir("..")
 	os.chdir(values.get('testDb'))
 	os.system('python gen_diff.py %s %d %d %d %d %d %d' % (values.get('augType'), int(window.FindElement('behavDiff').Get()), float(window.FindElement('gradAscent').Get()), int(window.FindElement('stepSize').Get()), int(window.FindElement('numSeeds').Get()), int(window.FindElement('numIterations').Get()), int(window.FindElement('actThresh').Get())))
-    else:
-        filename = os.path.join(folder, fnames[i])
+	i = 0
+	folder = '/home/malenfc/malenfc/deepxplore_senior_design/%s/generated_inputs' % values.get('testDb')
+	fnames,num_files = get_imgs(folder)
+	filename = os.path.join(folder, fnames[i])
+	image_elem.Update(data = get_img_data(filename))
+	filename_display_elem.Update(filename)
+	file_num_display_elem.Update('File {} of {}'.format(i + 1, num_files))
 
-    image_elem.Update(data = get_img_data(filename))
-    filename_display_elem.Update(filename)
-    file_num_display_elem.Update('File {} of {}'.format(i + 1, num_files))
