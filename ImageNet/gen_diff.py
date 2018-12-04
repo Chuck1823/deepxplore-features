@@ -51,6 +51,12 @@ model_layer_dict1, model_layer_dict2, model_layer_dict3 = init_coverage_tables(m
 # ==============================================================================================
 # start gen inputs
 img_paths = image.list_pictures('./seeds', ext='JPEG')
+orig_img_list = []
+gen_img_list = []
+p1 = []
+p2 = []
+p3 = []
+heatmap = np.zeros(shape=(img_rows,img_cols))
 for _ in xrange(args.seeds):
     gen_img = preprocess_image(random.choice(img_paths))
     orig_img = gen_img.copy()
@@ -151,6 +157,11 @@ for _ in xrange(args.seeds):
                     1])
             print(bcolors.OKGREEN + 'averaged covered neurons %.3f' % averaged_nc + bcolors.ENDC)
 
+            gen_img_list.append(gen_img)
+            orig_img_list.append(orig_img)
+            p1.append(str(predictions1))
+            p2.append(str(predictions2))
+            p3.append(str(predictions3))
             gen_img_deprocessed = deprocess_image(gen_img)
             orig_img_deprocessed = deprocess_image(orig_img)
 
@@ -159,4 +170,7 @@ for _ in xrange(args.seeds):
                 pred2) + '_' + decode_label(pred3) + '.png', gen_img_deprocessed)
             imsave('./generated_inputs/' + args.transformation + '_' + decode_label(pred1) + '_' + decode_label(
                 pred2) + '_' + decode_label(pred3) + '_orig.png', orig_img_deprocessed)
+            heatmap, hm_colored = update_heatmap(orig_img, gen_img, heatmap)
             break
+save_heatmap(hm_colored, args.transformation, args.seeds)
+error_pattern_match(hm_colored, orig_img_list, gen_img_list,args.transformation,p1,p2,p3)

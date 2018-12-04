@@ -57,9 +57,17 @@ model_layer_dict1, model_layer_dict2, model_layer_dict3 = init_coverage_tables(m
 
 # ==============================================================================================
 # start gen inputs
+orig_img_list = []
+gen_img_list = []
+p1 = []
+p2 = []
+p3 = []
+heatmap = np.zeros(shape=(img_rows,img_cols))
+scatter_plot_data = [[0,0,0]]
 for _ in xrange(args.seeds):
     gen_img = np.expand_dims(random.choice(x_test), axis=0)
     orig_img = gen_img.copy()
+
     # first check if input already induces differences
     label1, label2, label3 = np.argmax(model1.predict(gen_img)[0]), np.argmax(model2.predict(gen_img)[0]), np.argmax(
         model3.predict(gen_img)[0])
@@ -91,6 +99,7 @@ for _ in xrange(args.seeds):
         continue
 
     # if all label agrees
+
     orig_label = label1
     layer_name1, index1 = neuron_to_cover(model_layer_dict1)
     layer_name2, index2 = neuron_to_cover(model_layer_dict2)
@@ -156,6 +165,11 @@ for _ in xrange(args.seeds):
                     1])
             print(bcolors.OKGREEN + 'averaged covered neurons %.3f' % averaged_nc + bcolors.ENDC)
 
+            gen_img_list.append(gen_img)
+            orig_img_list.append(orig_img)
+            p1.append(str(predictions1))
+            p2.append(str(predictions2))
+            p3.append(str(predictions3))
             gen_img_deprocessed = deprocess_image(gen_img)
             orig_img_deprocessed = deprocess_image(orig_img)
 
@@ -166,4 +180,16 @@ for _ in xrange(args.seeds):
             imsave('./generated_inputs/' + args.transformation + '_' + str(predictions1) + '_' + str(
                 predictions2) + '_' + str(predictions3) + '_orig.png',
                    orig_img_deprocessed)
+            heatmap, hm_colored = update_heatmap(orig_img, gen_img, heatmap)
+            scatter_predictions =[neuron_covered(model_layer_dict1)[2],neuron_covered(model_layer_dict2)[2],neuron_covered(model_layer_dict3)[2]]
+            scatter_plot_data.append(scatter_predictions)
             break
+scatter_plot = make_scatter_plot(scatter_plot_data, args.transformation,
+        args.seeds)
+
+save_heatmap(hm_colored, args.transformation, args.seeds)
+<<<<<<< HEAD
+error_pattern_match(hm_colored, orig_img_list, gen_img_list,args.transformation,p1,p2,p3)
+=======
+save_scatter_plot(scatter_plot, args.transformation, args.seeds)
+>>>>>>> scatter
