@@ -4,9 +4,12 @@ usage: python gen_diff.py -h
 
 from __future__ import print_function
 
-import argparse
+from keras.preprocessing.image import load_img, img_to_array, list_pictures
 
-from scipy.misc import imsave
+import argparse
+import cv2
+
+from scipy.misc import imsave,imread
 
 from driving_models import *
 from utils import *
@@ -15,7 +18,7 @@ from utils import *
 # argument parsing
 parser = argparse.ArgumentParser(
     description='Main function for difference-inducing input generation in Driving dataset')
-parser.add_argument('transformation', help="realistic transformation type", choices=['light', 'occl', 'blackout'])
+parser.add_argument('transformation', help="realistic transformation type", choices=['light', 'occl', 'blackout', 'rain', 'blur', 'fog', 'bright'])
 parser.add_argument('weight_diff', help="weight hyperparm to control differential behavior", type=float)
 parser.add_argument('weight_nc', help="weight hyperparm to control neuron coverage", type=float)
 parser.add_argument('step', help="step size of gradient descent", type=float)
@@ -56,7 +59,8 @@ heatmap = np.zeros(shape=(img_rows,img_cols))
 scatter_plot_data = [[0,0,0]]
 for i in xrange(args.seeds):
     print('Image' + str(i))
-    gen_img = preprocess_image(random.choice(img_paths))
+    img = random.choice(img_paths)
+    gen_img = preprocess_image(img)
     orig_img = gen_img.copy()
     # first check if input already induces differences
     angle1, angle2, angle3 = model1.predict(gen_img)[0], model2.predict(gen_img)[0], model3.predict(gen_img)[0]
@@ -84,6 +88,7 @@ for i in xrange(args.seeds):
             neuron_covered(model_layer_dict3)[
                 1])
         print(bcolors.OKGREEN + 'averaged covered neurons %.3f' % averaged_nc + bcolors.ENDC)
+
         gen_img_deprocessed = draw_arrow(deprocess_image(gen_img), angle1, angle2, angle3)
 
         # save the result to disk
@@ -135,12 +140,23 @@ for i in xrange(args.seeds):
                                           args.occlusion_size)  # constraint the gradients value
         elif args.transformation == 'blackout':
             grads_value = constraint_black(grads_value)  # constraint the gradients value
+        elif args.transformation == 'rain':
+            constraint_rain(grads_value, img)
+        elif args.transformation == 'bright':
+            constraint_bright(grads_value, img)
+        elif args.transformation == 'fog':
+            preblur_img = imread(img)
+            blur_img = cv2.GaussianBlur(preblur_img,(15,15),0)
+            imsave('./generated_inputs/temp.png', blur_img)
 
-        gen_img += grads_value * args.step
+        if args.transformation == 'fog' or args.transformation == 'rain' or args.transformation == 'bright':
+            gen_img = preprocess_image('./generated_inputs/temp.png')
+        else :
+            gen_img += grads_value * args.step
+
         angle1, angle2, angle3 = model1.predict(gen_img)[0], model2.predict(gen_img)[0], model3.predict(gen_img)[0]
 
         if angle_diverged(angle1, angle2, angle3):
-
             update_coverage(gen_img, model1, model_layer_dict1, args.threshold)
             update_coverage(gen_img, model2, model_layer_dict2, args.threshold)
             update_coverage(gen_img, model3, model_layer_dict3, args.threshold)
@@ -171,11 +187,3 @@ for i in xrange(args.seeds):
                 angle3) + '_orig.png', orig_img_deprocessed)
             heatmap, hm_colored = update_heatmap(orig_img, gen_img, heatmap)
             break
-
-scatter_plot = make_scatter_plot(scatter_plot_data, args.transformation,args.seeds)
-save_heatmap(hm_colored, args.transformation, args.seeds)
-<<<<<<< HEAD
-error_pattern_match(hm_colored, orig_img_list, gen_img_list,args.transformation,p1,p2,p3)
-=======
-save_scatter_plot(scatter_plot, args.transformation, args.seeds)
->>>>>>> scatter
