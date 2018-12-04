@@ -188,8 +188,5 @@ scatter_plot = make_scatter_plot(scatter_plot_data, args.transformation,
         args.seeds)
 
 save_heatmap(hm_colored, args.transformation, args.seeds)
-<<<<<<< HEAD
 error_pattern_match(hm_colored, orig_img_list, gen_img_list,args.transformation,p1,p2,p3)
-=======
 save_scatter_plot(scatter_plot, args.transformation, args.seeds)
->>>>>>> scatter
