@@ -2,17 +2,14 @@ import cv2
 import math
 import random
 from collections import defaultdict
+from PIL import Image, ImageFilter
 
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 import tensorflow as tf
 from keras import backend as K
 from keras.applications.imagenet_utils import preprocess_input
 from keras.models import Model
 from keras.preprocessing import image
-from scipy.misc import imsave
-
 
 
 def draw_arrow(img, angle1, angle2, angle3):
@@ -42,7 +39,6 @@ def preprocess_image(img_path, target_size=(100, 100)):
     input_img_data = image.img_to_array(img)
     input_img_data = np.expand_dims(input_img_data, axis=0)
     input_img_data = preprocess_input(input_img_data)
-    # print(input_img_data.shape)
     return input_img_data
 
 
@@ -82,6 +78,23 @@ def constraint_occl(gradients, start_point, rect_shape):
                                                      start_point[1]:start_point[1] + rect_shape[1]]
     return new_grads
 
+def constraint_rain(gradients, img, size=30):
+    start_point = (
+        random.randint(0, gradients.shape[1] - size), random.randint(0, gradients.shape[2] - size))
+    image = Image.open(img)
+    cropped_image = image.crop((start_point[0],start_point[1],start_point[0]+size,start_point[1]+size))
+    blurred_image = cropped_image.filter(ImageFilter.GaussianBlur(radius=5))
+    image.paste(blurred_image,(start_point[0],start_point[1],start_point[0]+size,start_point[1]+size))
+    image.save('./generated_inputs/temp.png')
+
+def constraint_bright(gradients, img, size=30):
+    start_point = (
+        random.randint(0, gradients.shape[1] - size), random.randint(0, gradients.shape[2] - size))
+    image = Image.open(img)
+    white = Image.new('RGB',(gradients.shape[1],gradients.shape[2]),'#ffffff')
+    cropped_image = white.crop((start_point[0],start_point[1],start_point[0]+size,start_point[1]+size))
+    image.paste(cropped_image,(start_point[0],start_point[1],start_point[0]+size,start_point[1]+size))
+    image.save('./generated_inputs/temp.png')
 
 def constraint_light(gradients):
     new_grads = np.ones_like(gradients)
@@ -94,9 +107,9 @@ def constraint_black(gradients, rect_shape=(10, 10)):
         random.randint(0, gradients.shape[1] - rect_shape[0]), random.randint(0, gradients.shape[2] - rect_shape[1]))
     new_grads = np.zeros_like(gradients)
     patch = gradients[:, start_point[0]:start_point[0] + rect_shape[0], start_point[1]:start_point[1] + rect_shape[1]]
-    # if np.mean(patch) < 0:
-    new_grads[:, start_point[0]:start_point[0] + rect_shape[0],
-    start_point[1]:start_point[1] + rect_shape[1]] = -np.ones_like(patch)
+    if np.mean(patch) < 0:
+        new_grads[:, start_point[0]:start_point[0] + rect_shape[0],
+        start_point[1]:start_point[1] + rect_shape[1]] = -np.ones_like(patch)
     return new_grads
 
 
@@ -175,95 +188,3 @@ def diverged(predictions1, predictions2, predictions3, target):
     if not predictions1 == predictions2 == predictions3:
         return True
     return False
-
-def update_heatmap(orig_img, aug_img, heatmap):
-    for x in xrange(heatmap.shape[0]):
-        for y in xrange(heatmap.shape[1]):
-            if orig_img[0,x,y,0] != aug_img[0,x,y,0]:
-                heatmap[x,y] += 1
-    hm_avg = np.mean(heatmap)
-    hm_colored = np.zeros([heatmap.shape[0], heatmap.shape[1], 3], dtype=np.uint8)
-    for x in xrange(heatmap.shape[0]):
-        for y in xrange(heatmap.shape[1]):
-            if heatmap[x,y] >= hm_avg + .25 * hm_avg:
-                hm_colored[x,y] = [255,0,0]
-            elif heatmap[x,y] >= hm_avg and heatmap[x,y] < hm_avg + .25 * hm_avg:
-                hm_colored[x,y] = [255,165,0]
-            elif heatmap[x,y] < hm_avg and heatmap[x,y] >= hm_avg - .25 * hm_avg:
-                hm_colored[x,y] = [0,255,0]
-            else:
-                hm_colored[x,y] = [0,0,255]
-    print('updated heatmap')
-    return heatmap, hm_colored
-
-def save_heatmap(hm, aug, num_imgs):
-    fn = "MNIST_" + aug + "_" + str(num_imgs)
-    fp = "./heatmaps/" + fn + ".pdf"
-    pp = PdfPages(fp)
-    fig = plt.figure(figsize = (8.5, 11))
-    plt.imshow(hm)
-    pp.savefig()
-    plt.close()
-    pp.close()
-    print('heatmap saved to ' + fp)
-
-<<<<<<< HEAD
-def error_pattern_match(hm, orig_img_list, gen_img_list, transformation, p1, p2 ,p3):
-    error_pattern_set = []
-    p1_error = []
-    p2_error = []
-    p3_error = []
-    for i, img in enumerate(gen_img_list):
-        done = False
-        for x in xrange(hm.shape[0]):
-            for y in xrange(hm.shape[1]):
-                pixel = hm[x,y]
-                orig_img = orig_img_list[i]
-                if orig_img[0,x,y,0] != img[0,x,y,0] and pixel[0] == 255:
-                    error_pattern_set.append(draw_arrow(deprocess_image(img),p1[i],p2[i],p3[i]))
-                    p1_error.append(str(p1[i]))
-                    p2_error.append(str(p1[i]))
-                    p3_error.append(str(p3[i]))
-                    done = True
-                    break
-            if done:
-                break
-
-    for i, img in enumerate(error_pattern_set):
-        imsave('./error_pattern_set/' + transformation + '_' + p1_error[i] + '_' + p2_error[i] +
-                '_' + p3_error[i] + '.png', img)
-    print("Error pattern set saved to ./error_pattern_set/ folder")
-=======
-
-def make_scatter_plot(scatter_plot_data, aug, num_imgs):
-
-    data = []
-    
-    for i in range(len(scatter_plot_data)):
-        for j in range(3):
-            data.append((i,scatter_plot_data[i][j-1]))
-
-    fig = plt.figure()
-    ax = fig.add_subplot(1,1,1)
-    for pair in data:
-        x,y = pair
-        ax.scatter(x,y,alpha=0.8,c='red')
-    title = 'Driving_' + str(aug) + '_' + str(num_imgs) 
-    plt.title(title)
-    plt.xlabel('Iteration')
-    plt.ylabel('Predictions')
-    #plt.show()
-
-    print ('update scatter plot')
-    return fig
-
-def save_scatter_plot(scatter_plot, aug, num_imgs):
-    fn = "MNIST_" + aug + "_" + str(num_imgs)
-    fp = "./scatterplots/" +fn + ".pdf"
-    scatter_plot.savefig(fn,bbox_inches='tight')
-    pp=PdfPages(fn)
-    pp.savefig()
-    pp.close()
-
-    print('Scatter plot saved to: '+ fp) 
->>>>>>> scatter
