@@ -191,3 +191,67 @@ def diverged(predictions1, predictions2, predictions3, target):
     if not predictions1 == predictions2 == predictions3:
         return True
     return False
+
+    
+def update_heatmap(orig_img, aug_img, heatmap):
+    for x in xrange(heatmap.shape[0]):
+        for y in xrange(heatmap.shape[1]):
+            if orig_img[0,x,y,0] != aug_img[0,x,y,0]:
+                heatmap[x,y] += 1
+    hm_avg = np.mean(heatmap)
+    hm_colored = np.zeros([heatmap.shape[0], heatmap.shape[1], 3], dtype=np.uint8)
+    for x in xrange(heatmap.shape[0]):
+        for y in xrange(heatmap.shape[1]):
+            if heatmap[x,y] >= hm_avg + .25 * hm_avg:
+                hm_colored[x,y] = [255,0,0]
+            elif heatmap[x,y] >= hm_avg and heatmap[x,y] < hm_avg + .25 * hm_avg:
+                hm_colored[x,y] = [255,165,0]
+            elif heatmap[x,y] < hm_avg and heatmap[x,y] >= hm_avg - .25 * hm_avg:
+                hm_colored[x,y] = [0,255,0]
+            else:
+                hm_colored[x,y] = [0,0,255]
+    print('updated heatmap')
+    return heatmap, hm_colored
+
+def save_heatmap(hm, aug, num_imgs):
+    fn = "MNIST_" + aug + "_" + str(num_imgs)
+    fp = "./heatmaps/" + fn + ".pdf"
+    pp = PdfPages(fp)
+    fig = plt.figure(figsize = (8.5, 11))
+    plt.imshow(hm)
+    pp.savefig()
+    plt.close()
+    pp.close()
+    print('heatmap saved to ' + fp)
+
+def make_scatter_plot(scatter_plot_data, aug, num_imgs):
+
+    data = []
+    
+    for i in range(len(scatter_plot_data)):
+        for j in range(3):
+            data.append((i,scatter_plot_data[i][j-1]))
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1)
+    for pair in data:
+        x,y = pair
+        ax.scatter(x,y,alpha=0.8,c='red')
+    title = 'Driving_' + str(aug) + '_' + str(num_imgs) 
+    plt.title(title)
+    plt.xlabel('Iteration')
+    plt.ylabel('Predictions')
+    #plt.show()
+
+    print ('update scatter plot')
+    return fig
+
+def save_scatter_plot(scatter_plot, aug, num_imgs):
+    fn = "MNIST_" + aug + "_" + str(num_imgs)
+    fp = "./scatterplots/" +fn + ".pdf"
+    scatter_plot.savefig(fn,bbox_inches='tight')
+    pp=PdfPages(fn)
+    pp.savefig()
+    pp.close()
+
+    print('Scatter plot saved to: '+ fp) 

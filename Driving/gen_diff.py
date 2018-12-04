@@ -187,3 +187,7 @@ for i in xrange(args.seeds):
                 angle3) + '_orig.png', orig_img_deprocessed)
             heatmap, hm_colored = update_heatmap(orig_img, gen_img, heatmap)
             break
+scatter_plot = make_scatter_plot(scatter_plot_data, args.transformation,args.seeds)
+save_heatmap(hm_colored, args.transformation, args.seeds)
+save_scatter_plot(scatter_plot, args.transformation, args.seeds)
+error_pattern_match(hm_colored, orig_img_list, gen_img_list,args.transformation,p1,p2,p3)
