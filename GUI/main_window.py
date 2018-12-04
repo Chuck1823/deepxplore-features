@@ -1,11 +1,14 @@
 import PySimpleGUI27 as sg
 import os
 import io
+from os import path
+
 from PIL import Image, ImageTk
 
 sg.ChangeLookAndFeel('BlueMono')
 
-folder = '/home/malenfc/malenfc/deepxplore_senior_design/Driving/generated_inputs'
+basepath = path.dirname(__file__)
+folder = path.abspath(path.join(basepath, "..", "Driving", "generated_inputs"))
 img_types = (".png")
 
 def get_imgs(f):
@@ -77,7 +80,7 @@ while True:
 	os.chdir(values.get('testDb'))
 	os.system('python gen_diff.py %s %d %d %d %d %d %d' % (values.get('augType'), int(window.FindElement('behavDiff').Get()), float(window.FindElement('gradAscent').Get()), int(window.FindElement('stepSize').Get()), int(window.FindElement('numSeeds').Get()), int(window.FindElement('numIterations').Get()), int(window.FindElement('actThresh').Get())))
 	i = 0
-	folder = '/home/malenfc/malenfc/deepxplore_senior_design/%s/generated_inputs' % values.get('testDb')
+	folder = path.abspath(path.join(basepath, "..", "%s", "generated_inputs")) % values.get('testDb')
 	fnames,num_files = get_imgs(folder)
 	filename = os.path.join(folder, fnames[i])
 	image_elem.Update(data = get_img_data(filename))
