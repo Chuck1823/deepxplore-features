@@ -53,6 +53,7 @@ p1 = []
 p2 = []
 p3 = []
 heatmap = np.zeros(shape=(img_rows,img_cols))
+scatter_plot_data = [[0,0,0]]
 for i in xrange(args.seeds):
     print('Image' + str(i))
     gen_img = preprocess_image(random.choice(img_paths))
@@ -66,6 +67,12 @@ for i in xrange(args.seeds):
         update_coverage(gen_img, model1, model_layer_dict1, args.threshold)
         update_coverage(gen_img, model2, model_layer_dict2, args.threshold)
         update_coverage(gen_img, model3, model_layer_dict3, args.threshold)
+
+        scatter_predictions = []
+        scatter_predictions.append(neuron_covered(model_layer_dict1)[2])
+        scatter_predictions.append(neuron_covered(model_layer_dict2)[2])
+        scatter_predictions.append(neuron_covered(model_layer_dict3)[2])
+        scatter_plot_data.append(scatter_predictions)
 
         print(bcolors.OKGREEN + 'covered neurons percentage %d neurons %.3f, %d neurons %.3f, %d neurons %.3f'
               % (len(model_layer_dict1), neuron_covered(model_layer_dict1)[2], len(model_layer_dict2),
@@ -164,5 +171,11 @@ for i in xrange(args.seeds):
                 angle3) + '_orig.png', orig_img_deprocessed)
             heatmap, hm_colored = update_heatmap(orig_img, gen_img, heatmap)
             break
+
+scatter_plot = make_scatter_plot(scatter_plot_data, args.transformation,args.seeds)
 save_heatmap(hm_colored, args.transformation, args.seeds)
+<<<<<<< HEAD
 error_pattern_match(hm_colored, orig_img_list, gen_img_list,args.transformation,p1,p2,p3)
+=======
+save_scatter_plot(scatter_plot, args.transformation, args.seeds)
+>>>>>>> scatter
