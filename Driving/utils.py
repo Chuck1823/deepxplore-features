@@ -3,13 +3,16 @@ import math
 import random
 from collections import defaultdict
 from PIL import Image, ImageFilter
-
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 import tensorflow as tf
 from keras import backend as K
 from keras.applications.imagenet_utils import preprocess_input
 from keras.models import Model
 from keras.preprocessing import image
+from scipy.misc import imsave
+
 
 
 def draw_arrow(img, angle1, angle2, angle3):
@@ -107,9 +110,9 @@ def constraint_black(gradients, rect_shape=(10, 10)):
         random.randint(0, gradients.shape[1] - rect_shape[0]), random.randint(0, gradients.shape[2] - rect_shape[1]))
     new_grads = np.zeros_like(gradients)
     patch = gradients[:, start_point[0]:start_point[0] + rect_shape[0], start_point[1]:start_point[1] + rect_shape[1]]
-    if np.mean(patch) < 0:
-        new_grads[:, start_point[0]:start_point[0] + rect_shape[0],
-        start_point[1]:start_point[1] + rect_shape[1]] = -np.ones_like(patch)
+    # if np.mean(patch) < 0:
+    new_grads[:, start_point[0]:start_point[0] + rect_shape[0],
+    start_point[1]:start_point[1] + rect_shape[1]] = -np.ones_like(patch)
     return new_grads
 
 

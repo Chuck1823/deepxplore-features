@@ -42,7 +42,7 @@ input_tensor = Input(shape=input_shape)
 # load multiple models sharing same input tensor
 K.set_learning_phase(0)
 model1 = Dave_orig(input_tensor=input_tensor, load_weights=True)
-model2 = Dave_norminit(input_tensor=input_tensor, load_weights=True)
+model2 = Dave_orig(input_tensor=input_tensor, load_weights=True)
 model3 = Dave_dropout(input_tensor=input_tensor, load_weights=True)
 # init coverage table
 model_layer_dict1, model_layer_dict2, model_layer_dict3 = init_coverage_tables(model1, model2, model3)
@@ -50,7 +50,15 @@ model_layer_dict1, model_layer_dict2, model_layer_dict3 = init_coverage_tables(m
 # ==============================================================================================
 # start gen inputs
 img_paths = image.list_pictures('./testing/center', ext='jpg')
-for _ in xrange(args.seeds):
+orig_img_list = []
+gen_img_list = []
+p1 = []
+p2 = []
+p3 = []
+heatmap = np.zeros(shape=(img_rows,img_cols))
+scatter_plot_data = [[0,0,0]]
+for i in xrange(args.seeds):
+    print('Image' + str(i))
     img = random.choice(img_paths)
     gen_img = preprocess_image(img)
     orig_img = gen_img.copy()
@@ -63,6 +71,12 @@ for _ in xrange(args.seeds):
         update_coverage(gen_img, model1, model_layer_dict1, args.threshold)
         update_coverage(gen_img, model2, model_layer_dict2, args.threshold)
         update_coverage(gen_img, model3, model_layer_dict3, args.threshold)
+
+        scatter_predictions = []
+        scatter_predictions.append(neuron_covered(model_layer_dict1)[2])
+        scatter_predictions.append(neuron_covered(model_layer_dict2)[2])
+        scatter_predictions.append(neuron_covered(model_layer_dict3)[2])
+        scatter_plot_data.append(scatter_predictions)
 
         print(bcolors.OKGREEN + 'covered neurons percentage %d neurons %.3f, %d neurons %.3f, %d neurons %.3f'
               % (len(model_layer_dict1), neuron_covered(model_layer_dict1)[2], len(model_layer_dict2),
@@ -146,6 +160,7 @@ for _ in xrange(args.seeds):
             update_coverage(gen_img, model1, model_layer_dict1, args.threshold)
             update_coverage(gen_img, model2, model_layer_dict2, args.threshold)
             update_coverage(gen_img, model3, model_layer_dict3, args.threshold)
+            print('incorrect')
 
             print(bcolors.OKGREEN + 'covered neurons percentage %d neurons %.3f, %d neurons %.3f, %d neurons %.3f'
                   % (len(model_layer_dict1), neuron_covered(model_layer_dict1)[2], len(model_layer_dict2),
@@ -157,7 +172,11 @@ for _ in xrange(args.seeds):
                 neuron_covered(model_layer_dict3)[
                     1])
             print(bcolors.OKGREEN + 'averaged covered neurons %.3f' % averaged_nc + bcolors.ENDC)
-
+            gen_img_list.append(gen_img)
+            orig_img_list.append(orig_img)
+            p1.append(angle1)
+            p2.append(angle2)
+            p3.append(angle3)
             gen_img_deprocessed = draw_arrow(deprocess_image(gen_img), angle1, angle2, angle3)
             orig_img_deprocessed = draw_arrow(deprocess_image(orig_img), orig_angle1, orig_angle2, orig_angle3)
 
@@ -166,4 +185,5 @@ for _ in xrange(args.seeds):
                 angle3) + '.png', gen_img_deprocessed)
             imsave('./generated_inputs/' + args.transformation + '_' + str(angle1) + '_' + str(angle2) + '_' + str(
                 angle3) + '_orig.png', orig_img_deprocessed)
+            heatmap, hm_colored = update_heatmap(orig_img, gen_img, heatmap)
             break
